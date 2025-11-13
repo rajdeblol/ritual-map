@@ -3,23 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ritual Net – Pin, Pledge, Post</title>
+  <title>Ritual Net Map</title>
 
   <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-sA+eR9M2i3h8gAL3s3zKIm9zt8bV6M+cF7Y0F0L4X8c="
-    crossorigin=""
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
-    /* ---------- THEME ---------- */
+    /* ---------- Subtle Green-Black Theme ---------- */
     :root {
       --bg: #000000;
-      --fg: #00ff41;
-      --accent: #004d00;
-      --glow: rgba(0, 255, 65, 0.4);
+      --fg: #006400; /* Dark green text */
+      --accent: #003300; /* Darker green for buttons */
+      --border: rgba(0, 100, 0, 0.3); /* Very subtle green border */
+      --glow: rgba(0, 100, 0, 0.2); /* Minimal glow */
     }
     body {
       margin: 0;
@@ -30,40 +26,71 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      padding: 20px;
     }
     h1 {
-      text-shadow: 0 0 12px var(--fg);
+      color: var(--fg);
+      text-shadow: 0 0 5px var(--glow); /* Subtle shadow */
       margin: 1rem 0 0.5rem;
+      font-size: 2rem;
     }
     .logo {
       width: 80px; height: 80px;
       background: radial-gradient(circle, var(--accent), var(--bg));
-      border: 2px solid var(--fg);
+      border: 1px solid var(--border);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2rem;
-      box-shadow: 0 0 20px var(--glow);
+      box-shadow: 0 0 10px var(--glow); /* Minimal glow */
       margin-bottom: 0.5rem;
     }
-    .container {
-      width: 90%;
-      max-width: 800px;
-      background: rgba(0, 30, 0, 0.6);
-      padding: 1.5rem;
-      border: 1px solid var(--fg);
-      border-radius: 8px;
-      box-shadow: 0 0 15px var(--glow);
+    .pin-section {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--fg);
+    }
+    .views {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 1rem 0;
+    }
+    .view-button {
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.3s;
+    }
+    .view-button.active,
+    .view-button:hover {
+      background: var(--accent);
+      box-shadow: 0 0 5px var(--glow);
     }
     #map {
-      height: 350px;
-      margin-bottom: 1rem;
-      border: 1px solid var(--fg);
+      height: 500px; /* Taller for better world view */
+      width: 90%;
+      max-width: 800px;
+      margin: 1rem auto;
+      border: 1px solid var(--border);
+      box-shadow: 0 0 10px var(--glow);
+    }
+    .form-section {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(0, 0, 0, 0.5); /* Subtle overlay */
+      padding: 1rem;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
     }
     label {
       display: block;
       margin-top: 0.8rem;
+      color: var(--fg);
       font-weight: bold;
     }
     input[type="text"],
@@ -73,9 +100,10 @@
       padding: 0.5rem;
       margin-top: 0.3rem;
       background: var(--bg);
-      border: 1px solid var(--fg);
+      border: 1px solid var(--border);
       color: var(--fg);
       font-family: inherit;
+      box-sizing: border-box;
     }
     textarea {
       resize: vertical;
@@ -88,52 +116,63 @@
       gap: 0.5rem;
     }
     button {
-      margin-top: 1.2rem;
+      margin-top: 1rem;
       background: var(--accent);
       color: var(--fg);
-      border: 1px solid var(--fg);
+      border: 1px solid var(--border);
       padding: 0.7rem 1.5rem;
       cursor: pointer;
       font-family: inherit;
       transition: 0.3s;
     }
     button:hover {
-      background: var(--fg);
-      color: var(--bg);
-      box-shadow: 0 0 12px var(--fg);
+      box-shadow: 0 0 5px var(--glow);
     }
     .result {
       margin-top: 1rem;
       padding: 1rem;
-      background: rgba(0, 80, 0, 0.3);
-      border: 1px dashed var(--fg);
+      background: rgba(0, 51, 0, 0.2);
+      border: 1px dashed var(--border);
       display: none;
+      color: var(--fg);
     }
     hr {
       border: none;
-      border-top: 1px dashed var(--fg);
-      margin: 1.5rem 0;
+      border-top: 1px dashed var(--border);
+      width: 90%;
+      margin: 1.5rem auto;
     }
   </style>
 </head>
 <body>
 
-  <h1>Ritual Net</h1>
+  <h1>Ritual Net Map</h1>
   <div class="logo">🕸️</div>
 
-  <div class="container">
-    <p><strong>1.</strong> Click the map to pin your ritual location.</p>
-    <div id="map"></div>
+  <div class="pin-section">
+    <h3>Pin Your Location</h3>
+    <p>Click anywhere on the world map below to select.</p>
+  </div>
 
+  <div class="views">
+    <button class="view-button active" onclick="switchView('avatar')">Avatar View</button>
+    <button class="view-button" onclick="switchView('cluster')">Cluster View</button>
+  </div>
+
+  <hr />
+
+  <div id="map"></div>
+
+  <div class="form-section">
     <form id="ritualForm">
-      <label for="username">2. X (Twitter) username</label>
+      <label for="username">X (Twitter) Username</label>
       <input type="text" id="username" placeholder="@yourhandle" required />
 
-      <label for="photo">3. Upload a ritual picture</label>
+      <label for="photo">Upload a Picture</label>
       <input type="file" id="photo" accept="image/*" required />
 
-      <label for="pledge">4. Write your pledge</label>
-      <textarea id="pledge" placeholder="I solemnly swear to…" required></textarea>
+      <label for="pledge">Take a Pledge</label>
+      <textarea id="pledge" placeholder="I pledge to the Ritual Net..." required></textarea>
 
       <div class="checkbox">
         <input type="checkbox" id="agree" required />
@@ -143,37 +182,46 @@
       <button type="submit">Submit Ritual</button>
     </form>
 
-    <hr />
-
     <div class="result" id="result">
-      <h3>Ritual recorded!</h3>
+      <h3>Ritual Recorded!</h3>
       <pre id="output"></pre>
     </div>
   </div>
 
   <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-o9N1jA3E2V3n5U9kW8z6F5k3gXQ9k7r2U2iM7r2u7kM="
-    crossorigin=""
-  ></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
     // ---------- MAP SETUP ----------
-    const map = L.map('map').setView([20, 0], 2);
+    const map = L.map('map').setView([20, 0], 2); // World view: lat 20, lng 0, zoom 2
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18
+    }).addTo(map); // Neutral tiles, no green tint
 
     let marker = null;
     let selectedLatLng = null;
+    let currentViewMode = 'avatar';
 
     map.on('click', e => {
       selectedLatLng = e.latlng;
       if (marker) marker.setLatLng(selectedLatLng);
-      else marker = L.marker(selectedLatLng).addTo(map);
-      document.getElementById('username').focus();
+      else marker = L.marker(selectedLatLng, { icon: L.icon({ iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="%23006400" opacity="0.7"/></svg>'), iconSize: [20,20] }) }).addTo(map);
+      console.log('Pinned:', selectedLatLng); // For debugging
     });
+
+    function switchView(mode) {
+      currentViewMode = mode;
+      document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // In a real app, toggle layers/markers here. For now, just log.
+      if (mode === 'cluster') {
+        map.setZoom(1); // Zoom out for clusters
+      } else {
+        map.setZoom(2); // Standard world view
+      }
+    }
 
     // ---------- FORM HANDLING ----------
     const form = document.getElementById('ritualForm');
@@ -184,7 +232,7 @@
       e.preventDefault();
 
       if (!selectedLatLng) {
-        alert('Please pin a location on the map first.');
+        alert('Please click the map to pin a location first.');
         return;
       }
 
@@ -192,22 +240,29 @@
       const photoFile = document.getElementById('photo').files[0];
       const pledge = document.getElementById('pledge').value.trim();
 
-      // ---- Preview image ----
+      if (!photoFile) {
+        alert('Please upload a picture.');
+        return;
+      }
+
+      // Convert photo to data URL for preview
       const photoURL = await fileToDataURL(photoFile);
 
       const data = {
         location: { lat: selectedLatLng.lat.toFixed(6), lng: selectedLatLng.lng.toFixed(6) },
         username,
         pledge,
-        photo: photoURL
+        photo: photoURL,
+        view: currentViewMode
       };
 
-      // Show result
+      // Show preview
       output.textContent = JSON.stringify(data, null, 2);
       resultDiv.style.display = 'block';
+      resultDiv.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Helper: convert File → dataURL
+    // Helper: File to data URL
     function fileToDataURL(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -216,6 +271,9 @@
         reader.readAsDataURL(file);
       });
     }
+
+    // Debug: Log if map loads
+    map.whenReady(() => console.log('Map loaded successfully – world view ready!'));
   </script>
 </body>
 </html>
