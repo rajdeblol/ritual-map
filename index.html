@@ -1,279 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ritual Net Map</title>
-
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <style>
-    /* ---------- Subtle Green-Black Theme ---------- */
-    :root {
-      --bg: #000000;
-      --fg: #006400; /* Dark green text */
-      --accent: #003300; /* Darker green for buttons */
-      --border: rgba(0, 100, 0, 0.3); /* Very subtle green border */
-      --glow: rgba(0, 100, 0, 0.2); /* Minimal glow */
-    }
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: 'Courier New', monospace;
+      padding: 0;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+    #app {
+      position: relative;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+      justify-content: flex-start;
+      color: #006400; /* Subtle dark green */
+      padding-top: 20px;
     }
     h1 {
-      color: var(--fg);
-      text-shadow: 0 0 5px var(--glow); /* Subtle shadow */
-      margin: 1rem 0 0.5rem;
-      font-size: 2rem;
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      text-align: center;
     }
     .logo {
-      width: 80px; height: 80px;
-      background: radial-gradient(circle, var(--accent), var(--bg));
-      border: 1px solid var(--border);
+      width: 40px;
+      height: 40px;
+      background: #003300; /* Darker green */
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
-      box-shadow: 0 0 10px var(--glow); /* Minimal glow */
-      margin-bottom: 0.5rem;
+      font-size: 20px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(0, 100, 0, 0.3);
     }
-    .pin-section {
+    .pin-prompt {
+      font-size: 14px;
       text-align: center;
-      margin-bottom: 1rem;
-      color: var(--fg);
+      margin-bottom: 16px;
+      opacity: 0.8;
+      max-width: 300px;
     }
     .views {
       display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin: 1rem 0;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .view-button {
-      background: var(--bg);
-      color: var(--fg);
-      border: 1px solid var(--border);
+    .view-btn {
+      background: none;
+      border: 1px solid rgba(0, 100, 0, 0.3);
+      color: #006400;
       padding: 8px 16px;
       cursor: pointer;
-      font-family: inherit;
-      transition: 0.3s;
+      font-size: 14px;
+      border-radius: 4px;
+      transition: border-color 0.2s;
     }
-    .view-button.active,
-    .view-button:hover {
-      background: var(--accent);
-      box-shadow: 0 0 5px var(--glow);
+    .view-btn.active {
+      border-color: #006400;
+      background: rgba(0, 100, 0, 0.1);
     }
     #map {
-      height: 500px; /* Taller for better world view */
-      width: 90%;
-      max-width: 800px;
-      margin: 1rem auto;
-      border: 1px solid var(--border);
-      box-shadow: 0 0 10px var(--glow);
-    }
-    .form-section {
-      width: 90%;
-      max-width: 800px;
-      background: rgba(0, 0, 0, 0.5); /* Subtle overlay */
-      padding: 1rem;
-      border: 1px solid var(--border);
-      margin-top: 1rem;
-    }
-    label {
-      display: block;
-      margin-top: 0.8rem;
-      color: var(--fg);
-      font-weight: bold;
-    }
-    input[type="text"],
-    input[type="file"],
-    textarea {
+      flex: 1;
       width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--fg);
-      font-family: inherit;
-      box-sizing: border-box;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-    .checkbox {
-      margin-top: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    button {
-      margin-top: 1rem;
-      background: var(--accent);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      padding: 0.7rem 1.5rem;
-      cursor: pointer;
-      font-family: inherit;
-      transition: 0.3s;
-    }
-    button:hover {
-      box-shadow: 0 0 5px var(--glow);
-    }
-    .result {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(0, 51, 0, 0.2);
-      border: 1px dashed var(--border);
-      display: none;
-      color: var(--fg);
-    }
-    hr {
+      min-height: 0;
       border: none;
-      border-top: 1px dashed var(--border);
-      width: 90%;
-      margin: 1.5rem auto;
     }
   </style>
 </head>
 <body>
-
-  <h1>Ritual Net Map</h1>
-  <div class="logo">🕸️</div>
-
-  <div class="pin-section">
-    <h3>Pin Your Location</h3>
-    <p>Click anywhere on the world map below to select.</p>
-  </div>
-
-  <div class="views">
-    <button class="view-button active" onclick="switchView('avatar')">Avatar View</button>
-    <button class="view-button" onclick="switchView('cluster')">Cluster View</button>
-  </div>
-
-  <hr />
-
-  <div id="map"></div>
-
-  <div class="form-section">
-    <form id="ritualForm">
-      <label for="username">X (Twitter) Username</label>
-      <input type="text" id="username" placeholder="@yourhandle" required />
-
-      <label for="photo">Upload a Picture</label>
-      <input type="file" id="photo" accept="image/*" required />
-
-      <label for="pledge">Take a Pledge</label>
-      <textarea id="pledge" placeholder="I pledge to the Ritual Net..." required></textarea>
-
-      <div class="checkbox">
-        <input type="checkbox" id="agree" required />
-        <label for="agree">I accept the Ritual Net covenant</label>
-      </div>
-
-      <button type="submit">Submit Ritual</button>
-    </form>
-
-    <div class="result" id="result">
-      <h3>Ritual Recorded!</h3>
-      <pre id="output"></pre>
+  <div id="app">
+    <h1>Ritual Net Map</h1>
+    <div class="logo">🕸️</div>
+    <div class="pin-prompt">Click the map to pin your location</div>
+    <div class="views">
+      <button class="view-btn active" data-view="avatar">Avatar View</button>
+      <button class="view-btn" data-view="cluster">Cluster View</button>
     </div>
+    <div id="map"></div>
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    // ---------- MAP SETUP ----------
-    const map = L.map('map').setView([20, 0], 2); // World view: lat 20, lng 0, zoom 2
+    const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18
-    }).addTo(map); // Neutral tiles, no green tint
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    let marker = null;
-    let selectedLatLng = null;
-    let currentViewMode = 'avatar';
-
-    map.on('click', e => {
-      selectedLatLng = e.latlng;
-      if (marker) marker.setLatLng(selectedLatLng);
-      else marker = L.marker(selectedLatLng, { icon: L.icon({ iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="%23006400" opacity="0.7"/></svg>'), iconSize: [20,20] }) }).addTo(map);
-      console.log('Pinned:', selectedLatLng); // For debugging
+    let marker;
+    map.on('click', (e) => {
+      if (marker) map.removeLayer(marker);
+      marker = L.marker(e.latlng).addTo(map);
     });
 
-    function switchView(mode) {
-      currentViewMode = mode;
-      document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-      
-      // In a real app, toggle layers/markers here. For now, just log.
-      if (mode === 'cluster') {
-        map.setZoom(1); // Zoom out for clusters
-      } else {
-        map.setZoom(2); // Standard world view
-      }
-    }
-
-    // ---------- FORM HANDLING ----------
-    const form = document.getElementById('ritualForm');
-    const resultDiv = document.getElementById('result');
-    const output = document.getElementById('output');
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-
-      if (!selectedLatLng) {
-        alert('Please click the map to pin a location first.');
-        return;
-      }
-
-      const username = document.getElementById('username').value.trim();
-      const photoFile = document.getElementById('photo').files[0];
-      const pledge = document.getElementById('pledge').value.trim();
-
-      if (!photoFile) {
-        alert('Please upload a picture.');
-        return;
-      }
-
-      // Convert photo to data URL for preview
-      const photoURL = await fileToDataURL(photoFile);
-
-      const data = {
-        location: { lat: selectedLatLng.lat.toFixed(6), lng: selectedLatLng.lng.toFixed(6) },
-        username,
-        pledge,
-        photo: photoURL,
-        view: currentViewMode
-      };
-
-      // Show preview
-      output.textContent = JSON.stringify(data, null, 2);
-      resultDiv.style.display = 'block';
-      resultDiv.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    // Helper: File to data URL
-    function fileToDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const view = btn.dataset.view;
+        if (view === 'cluster') {
+          map.setZoom(1);
+        } else {
+          map.setZoom(2);
+        }
       });
-    }
+    });
 
-    // Debug: Log if map loads
-    map.whenReady(() => console.log('Map loaded successfully – world view ready!'));
+    console.log('Map ready – world view loaded.');
   </script>
 </body>
 </html>
